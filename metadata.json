@@ -1,0 +1,7 @@
+{
+  "name": "Copy of Gemini Bill Analyzer",
+  "description": "An intuitive application that uses Gemini to scan and analyze utility bills. Upload an image of your bill to extract key information and visualize your usage data over time.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
