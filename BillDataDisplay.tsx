@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import type { BillData, UsageChartData } from '../types';
+import type { BillData } from './types';
 import { UsageChart } from './UsageChart';
 import { EditableUsageTable } from './EditableUsageTable';
-import { exportBillToCsv } from '../utils/csv';
+import { exportBillToCsv } from './csv';
 
 interface BillDataDisplayProps {
   data: BillData;

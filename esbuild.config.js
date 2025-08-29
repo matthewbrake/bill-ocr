@@ -1,17 +1,19 @@
 require('dotenv').config();
 const esbuild = require('esbuild');
+
 const isProduction = process.env.NODE_ENV === 'production';
 
 esbuild.build({
-  entryPoints: ['src/index.tsx'],
+  entryPoints: ['index.tsx'],
   bundle: true,
   outfile: 'dist/bundle.js',
   sourcemap: !isProduction,
   minify: isProduction,
   define: {
-    // Make the API key available in the code as process.env.API_KEY
+    // Make environment variables available in the browser code
     'process.env.API_KEY': JSON.stringify(process.env.API_KEY || ''),
+    'process.env.FORMSPREE_FORM_ID': JSON.stringify(process.env.FORMSPREE_FORM_ID || ''),
   },
   loader: { '.ts': 'ts', '.tsx': 'tsx' },
-  jsx: 'automatic', // Use the new JSX transform
+  jsx: 'automatic',
 }).catch(() => process.exit(1));

@@ -1,7 +1,5 @@
 import { GoogleGenAI, Type } from "@google/genai";
-import type { BillData, AiSettings } from "../types";
-
-// --- Common Schema and Utilities ---
+import type { BillData } from "./types";
 
 const billSchema = {
   type: Type.OBJECT,
@@ -72,11 +70,10 @@ const postProcessData = (parsedData: any): BillDataSansId => {
     return parsedData;
 };
 
-// --- Gemini Provider ---
 
-const callGemini = async (imageB64: string, apiKey: string): Promise<BillDataSansId> => {
+export const analyzeBill = async (imageB64: string, apiKey: string): Promise<BillDataSansId> => {
     if (!apiKey) {
-        throw new Error("Gemini API Key is not configured. Please add it in the settings.");
+        throw new Error("API Key is not configured. Please set the API_KEY environment variable.");
     }
     
     const ai = new GoogleGenAI({ apiKey });
@@ -104,77 +101,5 @@ const callGemini = async (imageB64: string, apiKey: string): Promise<BillDataSan
     } catch (error) {
         console.error("Gemini API Error:", error);
         throw new Error("Failed to analyze the bill with Gemini. The model could not process the image. Please check your API key and try a clearer image.");
-    }
-};
-
-// --- Ollama Provider (OpenAI-compatible) ---
-
-const callOllama = async (imageB64: string, url: string, model: string): Promise<BillDataSansId> => {
-    if (!url || !model) {
-        throw new Error("Ollama URL or model is not configured. Please add it in the settings.");
-    }
-
-    const systemPrompt = `You are an API that exclusively returns JSON. Do not include any conversational text, explanations, or markdown formatting like \`\`\`json. Your entire response must be a single, raw JSON object that strictly adheres to the provided schema.
-
-User Request: ${prompt}
-JSON Schema: ${JSON.stringify(billSchema)}`;
-
-
-    try {
-        const response = await fetch(new URL("/v1/chat/completions", url).toString(), {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                model: model,
-                response_format: { type: "json_object" },
-                messages: [
-                    {
-                        role: "system",
-                        content: systemPrompt,
-                    },
-                    {
-                        role: "user",
-                        content: [
-                            { type: "text", text: "Analyze this utility bill image." },
-                            { type: "image_url", image_url: { url: imageB64 } }
-                        ]
-                    }
-                ],
-            }),
-        });
-
-        if (!response.ok) {
-            const errorBody = await response.text();
-            console.error("Ollama API Error Response:", errorBody);
-            throw new Error(`Ollama API returned an error: ${response.status} ${response.statusText}. Please check your Ollama server URL and ensure the model is running.`);
-        }
-
-        const responseData = await response.json();
-        const jsonText = responseData.choices[0].message.content;
-        const parsedData = JSON.parse(jsonText);
-        return postProcessData(parsedData);
-
-    } catch (error) {
-        console.error("Ollama Request Error:", error);
-        if (error instanceof TypeError) { // Network error
-            throw new Error("Could not connect to the Ollama server. Please ensure the server is running and the URL is correct.");
-        }
-        throw error; // Re-throw other errors
-    }
-};
-
-
-// --- Main Service Function ---
-
-export const analyzeBill = async (imageB64: string, settings: AiSettings): Promise<BillDataSansId> => {
-    switch (settings.provider) {
-        case 'gemini':
-            return callGemini(imageB64, settings.geminiApiKey);
-        case 'ollama':
-            return callOllama(imageB64, settings.ollamaUrl, settings.ollamaModel);
-        default:
-            throw new Error("Invalid AI provider selected.");
     }
 };

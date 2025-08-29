@@ -3,12 +3,12 @@ import type { AiSettings } from '../types';
 
 const AI_SETTINGS_KEY = 'billAnalyzerAiSettings';
 
-// Use the API key provided during the build process as a default, if available.
-const defaultGeminiKey = process.env.API_KEY || '';
+// Use the API key provided during the build process as the initial default.
+const buildTimeGeminiKey = process.env.API_KEY || '';
 
 const defaultSettings: AiSettings = {
     provider: 'gemini',
-    geminiApiKey: defaultGeminiKey,
+    geminiApiKey: buildTimeGeminiKey,
     ollamaUrl: 'http://localhost:11434',
     ollamaModel: 'llava',
 };
@@ -18,12 +18,17 @@ export const useAiSettings = () => {
         try {
             const storedSettings = localStorage.getItem(AI_SETTINGS_KEY);
             if (storedSettings) {
-                // Merge stored settings with defaults to ensure new fields are added
-                return { ...defaultSettings, ...JSON.parse(storedSettings) };
+                const parsed = JSON.parse(storedSettings);
+                // Ensure the default key from build is used if the stored key is empty
+                if (!parsed.geminiApiKey && buildTimeGeminiKey) {
+                    parsed.geminiApiKey = buildTimeGeminiKey;
+                }
+                return { ...defaultSettings, ...parsed };
             }
         } catch (e) {
             console.error("Failed to load AI settings from localStorage", e);
         }
+        // If nothing is stored, return the defaults (which include the build-time key)
         return defaultSettings;
     });
 

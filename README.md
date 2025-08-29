@@ -1,86 +1,90 @@
-# AI Bill Analyzer
+# AI Bill Analyzer (Simplified for Self-Hosting)
 
-An intuitive, production-grade application that uses AI to scan and analyze utility bills. Upload an image of your bill to extract key information, visualize usage data, and export the results.
+An intuitive application that uses the Gemini AI to scan and analyze utility bills. Upload an image of your bill to extract key information, visualize usage data, and export the results.
 
-This project is a single-page frontend application built with React and TypeScript. It has been containerized with Docker for easy and reliable deployment.
+This version has been simplified for easy self-hosting on your own computer.
 
-## Advanced Features
+## Features
 
-- **Multi-AI Provider Support**: Choose between the cloud-based Google Gemini API or a self-hosted local Ollama instance.
-- **Persistent History & Settings**: Your analysis history and AI settings are securely saved in your browser's local storage.
-- **Client-Side Rate Limiting**: Helps manage costs by preventing more than 5 analysis requests in a 5-minute period.
-- **Data Export**: Export any analysis to a CSV file or submit the data to a form endpoint.
-
-## Prerequisites
-
-- [Docker](https://www.docker.com/get-started)
-- [Docker Compose](https://docs.docker.com/compose/install/) (usually included with Docker Desktop)
-
-## Quickstart & Deployment
-
-Follow these steps to build and run the application.
-
-### 1. Build and Run with Docker Compose
-
-With Docker running on your machine, execute the following command from the root of the project directory:
-
-```bash
-docker-compose up --build
-```
-
-This command will build the Docker image, create a container, and start the application.
-
-### 2. Access the Application
-
-Once the container is running, open your web browser and navigate to:
-
-[http://localhost:8080](http://localhost:8080)
-
-You should see the AI Bill Analyzer application running.
-
-### 3. Configure the AI Provider
-
-Before you can analyze a bill, you must configure an AI provider.
-1.  In the app, click the **settings icon (⚙️)** in the top-right corner.
-2.  Follow the detailed instructions in the **"Configuring the AI Provider"** section below to set up either Google Gemini or a local Ollama model.
+-   **Intelligent OCR**: Accurately extracts key details, line items, and usage chart data from any bill image using Gemini.
+-   **Editable Data**: Review and edit all extracted data before saving or exporting.
+-   **Data Export**: Download analysis to a CSV file or submit the data to a form endpoint.
+-   **Persistent History**: Your analysis history is saved in your browser's local storage for privacy and convenience.
+-   **Client-Side Rate Limiting**: Prevents accidental API spam by limiting requests.
 
 ---
 
-## Configuring the AI Provider
+## How to Run This App on Your Computer
 
-You can choose your provider from the settings panel inside the app.
+### Prerequisites
 
-### Option A: Google Gemini (Cloud-based)
+-   [Node.js](https://nodejs.org/) (v18 or higher) and npm installed.
 
-This is the easiest way to get started and generally provides the highest accuracy.
+### Step 1: Create Your Environment File
 
-1.  **Get an API Key**: Visit [Google AI Studio](https://aistudio.google.com/app/apikey) to create a free API key.
-2.  **Open Settings**: In the app, click the settings icon (⚙️).
-3.  **Enter Key**: On the "Google Gemini" tab, paste your API key into the input field.
-4.  **Save**: Click "Save Settings". You are now ready to analyze bills.
+This is where you'll put your secret keys.
 
-### Option B: Ollama (Self-Hosted Local AI)
+1.  In the project's main folder, create a new file named `.env`.
+2.  Open the `.env` file and add the following, pasting your keys where indicated:
 
-This option allows you to run the AI entirely on your own machine for free. It requires a one-time setup.
-
-1.  **Download and Install Ollama**: Go to [https://ollama.com/](https://ollama.com/) and download the application for your operating system.
-2.  **Pull a Vision Model**: Open your terminal (or Command Prompt) and run the following command to download `llava`, a powerful vision model:
     ```bash
-    ollama run llava
+    # Required: Your Google Gemini API Key.
+    # Get a free key from Google AI Studio: https://aistudio.google.com/app/apikey
+    API_KEY="YOUR_GEMINI_API_KEY_HERE"
+
+    # Optional: If you want to use the "Submit Form" button, create a free
+    # form endpoint at https://formspree.io/ and paste the ID here.
+    FORMSPREE_FORM_ID="YOUR_FORMSPREE_ID_HERE"
     ```
-    Wait for the download to complete. You can then close the terminal.
-3.  **Open Settings**: In the app, click the settings icon (⚙️).
-4.  **Configure Ollama**:
-    -   Click the **"Ollama (Local)"** tab.
-    -   Ensure the **Ollama Server URL** is `http://localhost:11434` (this is the default).
-    -   Ensure the **Model Name** is `llava`.
-5.  **Save**: Click "Save Settings". You are now ready to analyze bills using your local AI.
 
-### Providing a Default API Key (Optional)
+### Step 2: Install and Build the App
 
-For developers who want to pre-configure the app with a default Gemini API key during the build process, you can create a `.env` file.
+Open your terminal or command prompt in the project folder and run these commands:
 
-1.  Rename `example.env` to `.env`.
-2.  Open the `.env` file and add your key: `API_KEY=YOUR_GEMINI_API_KEY_HERE`.
+1.  **Install dependencies:**
+    ```bash
+    npm install
+    ```
 
-When you run `docker-compose up --build`, this key will be set as the default in the application's settings. Users can still override it later in the settings panel.
+2.  **Build the application:**
+    This command reads your `.env` file and builds the static files into the `dist/` directory.
+    ```bash
+    npm run build
+    ```
+
+### Step 3: Serve the Application
+
+You need a simple local server to run the app. We recommend the `serve` package.
+
+1.  **Install the server (if you haven't already):**
+    ```bash
+    npm install -g serve
+    ```
+
+2.  **Start the server:**
+    This command starts the default server on port 3000.
+    ```bash
+    serve -s . -l 3000
+    ```
+    To run the app on a different port, change the number after the `-l` flag. For example, to use port **3008**, run this command instead:
+    ```bash
+    serve -s . -l 3008
+    ```
+
+
+3.  **Access the Application:**
+    Open your web browser and navigate to the address provided in your terminal (e.g., **[http://localhost:3000](http://localhost:3000)** or **[http://localhost:3008](http://localhost:3008)**).
+
+The application should now be running locally on your machine!
+
+---
+
+## A Note on Data Storage (Database and Files)
+
+You might want the app to automatically save uploaded bills and CSVs into a folder on your computer. For security reasons, web applications that run in a browser are **not allowed** to directly access your local file system. They cannot create folders, save files without your permission, or manage a local database file (like a `.db` file).
+
+To implement that functionality, a separate backend server would be required, which is beyond the scope of this frontend project.
+
+As a secure, browser-based alternative, this application:
+1.  **Saves your analysis history** to your browser's `localStorage`.
+2.  **Lets you download** the data as a CSV file anytime.
