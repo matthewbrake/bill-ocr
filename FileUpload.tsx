@@ -4,6 +4,7 @@ interface FileUploadProps {
   onFileUpload: (file: File) => void;
   onUseCamera: () => void;
   isConfigured: boolean;
+  onConfigure: () => void;
 }
 
 const UploadIcon: React.FC = () => (
@@ -19,7 +20,14 @@ const CameraIcon: React.FC<{className?: string}> = ({className}) => (
     </svg>
 );
 
-export const FileUpload: React.FC<FileUploadProps> = ({ onFileUpload, onUseCamera, isConfigured }) => {
+const CogIcon: React.FC<{className?: string}> = ({className}) => (
+    <svg xmlns="http://www.w3.org/2000/svg" className={className} viewBox="0 0 20 20" fill="currentColor">
+        <path fillRule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-1.57 1.996A1.532 1.532 0 013 7.482c-1.56.38-1.56 2.6 0 2.98a1.532 1.532 0 01.948 2.286c-.836 1.372.734 2.942 1.996 1.57a1.532 1.532 0 012.286.948c.38 1.56 2.6 1.56 2.98 0a1.532 1.532 0 012.286-.948c1.372.836 2.942-.734-1.57-1.996A1.532 1.532 0 0117 12.518c1.56-.38 1.56-2.6 0-2.98a1.532 1.532 0 01-.948-2.286c.836-1.372-.734-2.942-1.996-1.57A1.532 1.532 0 0111.49 3.17zM10 13a3 3 0 100-6 3 3 0 000 6z" clipRule="evenodd" />
+    </svg>
+);
+
+
+export const FileUpload: React.FC<FileUploadProps> = ({ onFileUpload, onUseCamera, isConfigured, onConfigure }) => {
   const [isDragging, setIsDragging] = useState(false);
 
   const handleDragEnter = useCallback((e: React.DragEvent<HTMLDivElement>) => {
@@ -59,11 +67,17 @@ export const FileUpload: React.FC<FileUploadProps> = ({ onFileUpload, onUseCamer
   return (
     <div className="space-y-4">
         {!isConfigured && (
-             <div className="p-4 bg-amber-50 dark:bg-amber-900/20 border-l-4 border-amber-400 dark:border-amber-500/50 rounded-r-lg">
-                <h3 className="text-md font-semibold text-amber-800 dark:text-amber-300">Configuration Required</h3>
-                <p className="text-sm text-amber-700 dark:text-amber-400 mt-1">
-                    Please provide your Gemini API Key in the `.env` file and restart the application to continue.
-                </p>
+             <div className="p-4 bg-sky-50 dark:bg-sky-900/20 border-l-4 border-sky-400 dark:border-sky-500/50 rounded-r-lg flex items-center justify-between">
+                <div>
+                    <h3 className="text-md font-semibold text-sky-800 dark:text-sky-300">Configuration Required</h3>
+                    <p className="text-sm text-sky-700 dark:text-sky-400 mt-1">
+                       Please set up your AI provider before you can analyze a bill.
+                    </p>
+                </div>
+                <button onClick={onConfigure} className="flex-shrink-0 flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-sky-600 rounded-lg hover:bg-sky-700 transition-colors">
+                    <CogIcon className="w-5 h-5" />
+                    Configure
+                </button>
             </div>
         )}
         <div 

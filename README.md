@@ -1,16 +1,16 @@
 # AI Bill Analyzer (Simplified for Self-Hosting)
 
-An intuitive application that uses the Gemini AI to scan and analyze utility bills. Upload an image of your bill to extract key information, visualize usage data, and export the results.
+An intuitive application that uses AI to scan and analyze utility bills. Upload an image of your bill to extract key information, visualize usage data, and export the results.
 
-This version has been simplified for easy self-hosting on your own computer.
+This version has been simplified for easy self-hosting and now supports both the **Google Gemini** cloud API and a local **Ollama** instance.
 
 ## Features
 
--   **Intelligent OCR**: Accurately extracts key details, line items, and usage chart data from any bill image using Gemini.
+-   **Flexible AI Backend**: Choose between the powerful Google Gemini API or a private, local Ollama instance.
+-   **Intelligent OCR**: Accurately extracts key details, line items, and usage chart data from any bill image.
 -   **Editable Data**: Review and edit all extracted data before saving or exporting.
 -   **Data Export**: Download analysis to a CSV file or submit the data to a form endpoint.
--   **Persistent History**: Your analysis history is saved in your browser's local storage for privacy and convenience.
--   **Client-Side Rate Limiting**: Prevents accidental API spam by limiting requests.
+-   **Persistent History & Settings**: Your analysis history and AI provider settings are saved in your browser's local storage for privacy and convenience.
 
 ---
 
@@ -20,15 +20,15 @@ This version has been simplified for easy self-hosting on your own computer.
 
 -   [Node.js](https://nodejs.org/) (v18 or higher) and npm installed.
 
-### Step 1: Create Your Environment File
+### Step 1: Create Your Environment File (Optional)
 
-This is where you'll put your secret keys.
+You can provide default keys in a `.env` file. These can be overridden later in the app's settings panel.
 
 1.  In the project's main folder, create a new file named `.env`.
-2.  Open the `.env` file and add the following, pasting your keys where indicated:
+2.  Open the `.env` file and add the following. These will be the default values when the app first loads.
 
     ```bash
-    # Required: Your Google Gemini API Key.
+    # Optional: Your Google Gemini API Key can be set as a default.
     # Get a free key from Google AI Studio: https://aistudio.google.com/app/apikey
     API_KEY="YOUR_GEMINI_API_KEY_HERE"
 
@@ -39,7 +39,7 @@ This is where you'll put your secret keys.
 
 ### Step 2: Install and Build the App
 
-Open your terminal or command prompt in the project folder and run these commands:
+Open your terminal in the project folder and run these commands:
 
 1.  **Install dependencies:**
     ```bash
@@ -66,25 +66,15 @@ You need a simple local server to run the app. We recommend the `serve` package.
     ```bash
     serve -s . -l 3000
     ```
-    To run the app on a different port, change the number after the `-l` flag. For example, to use port **3008**, run this command instead:
+    To run the app on a different port, change the number. For example, to use port **3008**:
     ```bash
     serve -s . -l 3008
     ```
 
+3.  **Access and Configure the Application:**
+    -   Open your web browser and navigate to the address from your terminal (e.g., `http://localhost:3000`).
+    -   Click the **cog icon** in the top-right corner to open the **AI Provider Settings**.
+    -   Here you can select either **Gemini** (and enter your API key) or **Ollama** (and enter your local server URL/model name).
+    -   Your choice is saved in your browser for future visits.
 
-3.  **Access the Application:**
-    Open your web browser and navigate to the address provided in your terminal (e.g., **[http://localhost:3000](http://localhost:3000)** or **[http://localhost:3008](http://localhost:3008)**).
-
-The application should now be running locally on your machine!
-
----
-
-## A Note on Data Storage (Database and Files)
-
-You might want the app to automatically save uploaded bills and CSVs into a folder on your computer. For security reasons, web applications that run in a browser are **not allowed** to directly access your local file system. They cannot create folders, save files without your permission, or manage a local database file (like a `.db` file).
-
-To implement that functionality, a separate backend server would be required, which is beyond the scope of this frontend project.
-
-As a secure, browser-based alternative, this application:
-1.  **Saves your analysis history** to your browser's `localStorage`.
-2.  **Lets you download** the data as a CSV file anytime.
+The application is now running on your machine!
