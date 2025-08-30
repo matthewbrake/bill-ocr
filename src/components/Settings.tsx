@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import type { AiSettings, AiProvider } from '../types';
 
 interface SettingsProps {
@@ -26,19 +26,64 @@ const InputField: React.FC<{label: string; id: string; value: string; onChange: 
     </div>
 );
 
+const SpinnerIcon: React.FC = () => (
+    <svg className="animate-spin -ml-1 mr-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+    </svg>
+);
+
 
 export const Settings: React.FC<SettingsProps> = ({ settings, onSave, onClose }) => {
     const [localSettings, setLocalSettings] = useState<AiSettings>(settings);
     const [activeTab, setActiveTab] = useState<AiProvider>(settings.provider);
 
+    const [ollamaConnection, setOllamaConnection] = useState<{ status: 'idle' | 'testing' | 'success' | 'error'; message: string }>({ status: 'idle', message: '' });
+    const [ollamaModels, setOllamaModels] = useState<string[]>([]);
+
+
     const handleSave = () => {
-        // Set the active tab as the provider before saving
         onSave({ ...localSettings, provider: activeTab });
     };
 
-    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { id, value } = e.target;
         setLocalSettings(prev => ({ ...prev, [id]: value }));
+    };
+
+     const handleTestConnection = async () => {
+        setOllamaConnection({ status: 'testing', message: 'Testing connection...' });
+        setOllamaModels([]);
+        try {
+            const url = new URL('/api/tags', localSettings.ollamaUrl).toString();
+            const response = await fetch(url, { signal: AbortSignal.timeout(5000) }); // 5 second timeout
+            if (!response.ok) {
+                throw new Error(`Server responded with status: ${response.status}`);
+            }
+            const data = await response.json();
+
+            if (data && Array.isArray(data.models)) {
+                const modelNames = data.models.map((m: { name: string }) => m.name);
+                setOllamaModels(modelNames);
+
+                if (modelNames.length > 0) {
+                    setOllamaConnection({ status: 'success', message: `Success! Found ${modelNames.length} models.` });
+                    if (!modelNames.includes(localSettings.ollamaModel)) {
+                        setLocalSettings(prev => ({ ...prev, ollamaModel: modelNames[0] }));
+                    }
+                } else {
+                    setOllamaConnection({ status: 'error', message: 'Connected, but no models found on server.' });
+                }
+            } else {
+                throw new Error('Received an invalid response from the server.');
+            }
+        } catch (error) {
+            console.error("Ollama connection test failed:", error);
+            const errorMessage = error instanceof Error && error.name === 'TimeoutError'
+                ? 'Connection timed out. Check the server URL.'
+                : 'Connection failed. Check URL and ensure Ollama is running with CORS enabled.';
+            setOllamaConnection({ status: 'error', message: errorMessage });
+        }
     };
     
     const TabButton: React.FC<{provider: AiProvider; children: React.ReactNode}> = ({ provider, children }) => (
@@ -53,6 +98,13 @@ export const Settings: React.FC<SettingsProps> = ({ settings, onSave, onClose })
             {children}
         </button>
     );
+
+    const connectionStatusStyles = {
+        success: 'text-green-600 dark:text-green-500',
+        error: 'text-red-600 dark:text-red-500',
+        testing: 'text-slate-500 dark:text-slate-400',
+        idle: 'text-slate-500 dark:text-slate-400',
+    };
 
     return (
         <div 
@@ -97,23 +149,62 @@ export const Settings: React.FC<SettingsProps> = ({ settings, onSave, onClose })
                         )}
 
                         {activeTab === 'ollama' && (
-                            <div className="space-y-4 animate-fade-in">
-                               <InputField 
-                                    label="Ollama Server URL"
-                                    id="ollamaUrl"
-                                    value={localSettings.ollamaUrl}
-                                    onChange={handleInputChange}
-                                    placeholder="e.g., http://localhost:11434"
-                                    description="The URL of your running Ollama instance."
-                                />
-                                <InputField 
-                                    label="Model Name"
-                                    id="ollamaModel"
-                                    value={localSettings.ollamaModel}
-                                    onChange={handleInputChange}
-                                    placeholder="e.g., llava, moondream"
-                                    description="The multimodal model to use (must be pulled in Ollama)."
-                                />
+                             <div className="space-y-4 animate-fade-in">
+                                <div>
+                                    <div className="flex items-end gap-2">
+                                        <div className="flex-grow">
+                                            <InputField 
+                                                label="Ollama Server URL"
+                                                id="ollamaUrl"
+                                                value={localSettings.ollamaUrl}
+                                                onChange={handleInputChange}
+                                                placeholder="e.g., http://localhost:11434"
+                                            />
+                                        </div>
+                                        <button 
+                                            onClick={handleTestConnection}
+                                            disabled={ollamaConnection.status === 'testing'}
+                                            className="flex-shrink-0 flex items-center justify-center px-3 py-2 text-sm font-medium text-white bg-sky-600 rounded-md hover:bg-sky-700 disabled:bg-slate-400 dark:disabled:bg-slate-600 transition-colors"
+                                        >
+                                           {ollamaConnection.status === 'testing' && <SpinnerIcon />}
+                                           Test
+                                        </button>
+                                    </div>
+                                    {ollamaConnection.status !== 'idle' && (
+                                        <p className={`mt-1.5 text-xs ${connectionStatusStyles[ollamaConnection.status]}`}>
+                                            {ollamaConnection.message}
+                                        </p>
+                                    )}
+                                </div>
+                                {ollamaModels.length > 0 ? (
+                                    <div>
+                                        <label htmlFor="ollamaModel" className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+                                            Model Name
+                                        </label>
+                                        <select
+                                            id="ollamaModel"
+                                            value={localSettings.ollamaModel}
+                                            onChange={handleInputChange}
+                                            className="mt-1 block w-full pl-3 pr-10 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-md text-sm shadow-sm
+                                            focus:outline-none focus:ring-sky-500 focus:border-sky-500"
+                                        >
+                                            {ollamaModels.map(modelName => (
+                                                <option key={modelName} value={modelName}>
+                                                    {modelName}
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                ) : (
+                                    <InputField 
+                                        label="Model Name"
+                                        id="ollamaModel"
+                                        value={localSettings.ollamaModel}
+                                        onChange={handleInputChange}
+                                        placeholder="e.g., llava, moondream"
+                                        description="Test connection to auto-populate this list."
+                                    />
+                                )}
                             </div>
                         )}
                     </div>
